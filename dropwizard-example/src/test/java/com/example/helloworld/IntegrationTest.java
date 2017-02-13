@@ -10,6 +10,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
@@ -60,5 +61,29 @@ public class IntegrationTest {
         assertThat(newPerson.getId()).isNotNull();
         assertThat(newPerson.getFullName()).isEqualTo(person.getFullName());
         assertThat(newPerson.getJobTitle()).isEqualTo(person.getJobTitle());
+    }
+
+    @Test
+    public void testProtectedGuestEndpoint() {
+        String secret = RULE.client().target("http://localhost:" + RULE.getLocalPort() + "/protected/guest").request()
+                .header(HttpHeaders.AUTHORIZATION, "Basic Z3Vlc3Q6c2VjcmV0")
+                .get(String.class);
+        assertThat(secret).startsWith("Hey there, guest. You know the secret!");
+    }
+
+    @Test
+    public void testProtectedEndpoint() {
+        String secret = RULE.client().target("http://localhost:" + RULE.getLocalPort() + "/protected").request()
+                .header(HttpHeaders.AUTHORIZATION, "Basic Z29vZC1ndXk6c2VjcmV0")
+                .get(String.class);
+        assertThat(secret).startsWith("Hey there, good-guy. You know the secret!");
+    }
+
+    @Test
+    public void testProtectedAdminEndpoint() {
+        String secret = RULE.client().target("http://localhost:" + RULE.getLocalPort() + "/protected/admin").request()
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2hpZWYtd2l6YXJkOnNlY3JldA==")
+                .get(String.class);
+        assertThat(secret).startsWith("Hey there, chief-wizard. It looks like you are an admin.");
     }
 }
